@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f2ed">
+    <meta name="description" content="Kimya — A quiet place for sermons, verses & prayers. An offline-first journal app.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>Kimya — Sermons, Verses & Prayers Journal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>Kimya</h1>
+            <p>a quiet place for sermons, verses & prayers</p>
+        </header>
+
+        <nav class="nav">
+            <button class="nav-btn active" data-section="journal">Journal</button>
+            <button class="nav-btn" data-section="sermons">Sermons</button>
+            <button class="nav-btn" data-section="verses">Verses</button>
+            <button class="nav-btn" data-section="prayers">Prayers</button>
+            <button class="nav-btn" data-section="profile">Profile</button>
+        </nav>
+
+        <main class="main">
+            <!-- Journal Section -->
+            <section id="journal" class="section active">
+                <h2 class="section-title">Journal</h2>
+
+                <div class="card">
+                    <div class="card-title">Quick Entry</div>
+                    <div class="form-group">
+                        <label>What are you grateful for today?</label>
+                        <textarea id="journal-entry" placeholder="Write your thoughts here..."></textarea>
+                    </div>
+                    <button class="btn" id="save-journal">Save Entry</button>
+                </div>
+
+                <div id="journal-list" class="item-list"></div>
+            </section>
+
+            <!-- Sermons Section -->
+            <section id="sermons" class="section">
+                <h2 class="section-title">Sermon Notes</h2>
+
+                <div class="card">
+                    <div class="card-title">New Sermon Note</div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="sermon-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Preacher</label>
+                        <input type="text" id="sermon-preacher" placeholder="Who preached?">
+                    </div>
+                    <div class="form-group">
+                        <label>Topic / Title</label>
+                        <input type="text" id="sermon-topic" placeholder="Sermon title or topic">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <div class="rich-editor" id="sermon-editor">
+                            <div class="rich-toolbar">
+                                <button type="button" class="rich-btn" data-cmd="bold" title="Bold (Ctrl+B)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"/><path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/></svg>
+                                </button>
+                                <button type="button" class="rich-btn" data-cmd="italic" title="Italic (Ctrl+I)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+                                </button>
+                                <button type="button" class="rich-btn" data-cmd="underline" title="Underline (Ctrl+U)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+                                </button>
+                                <span class="rich-divider"></span>
+                                <button type="button" class="rich-btn" data-cmd="insertUnorderedList" title="Bullet List">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                                </button>
+                                <button type="button" class="rich-btn" data-cmd="insertOrderedList" title="Numbered List">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+                                </button>
+                                <span class="rich-divider"></span>
+                                <button type="button" class="rich-btn" data-cmd="justifyLeft" title="Align Left">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                                </button>
+                                <button type="button" class="rich-btn" data-cmd="justifyCenter" title="Align Center">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+                                </button>
+                                <span class="rich-divider"></span>
+                                <button type="button" class="rich-btn" data-cmd="removeFormat" title="Clear Formatting">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h5"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                                </button>
+                            </div>
+                            <div class="rich-content" id="sermon-notes" contenteditable="true" placeholder="Your notes from the sermon..."></div>
+                        </div>
+                    </div>
+                    <button class="btn" id="save-sermon">Save Sermon Note</button>
+                </div>
+
+                <div id="sermon-list" class="item-list"></div>
+            </section>
+
+            <!-- Verses Section -->
+            <section id="verses" class="section">
+                <h2 class="section-title">Favourite Bible Verses</h2>
+
+                <div class="card">
+                    <div class="card-title">Save a Verse</div>
+                    <div class="form-group">
+                        <label>Reference</label>
+                        <input type="text" id="verse-ref" placeholder="e.g., John 3:16">
+                    </div>
+                    <div class="form-group">
+                        <label>Verse Text</label>
+                        <textarea id="verse-text" placeholder="For God so loved the world..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Personal Note (optional)</label>
+                        <textarea id="verse-note" placeholder="Why this verse speaks to you..."></textarea>
+                    </div>
+                    <button class="btn" id="save-verse">Save Verse</button>
+                </div>
+
+                <div id="verse-list" class="item-list"></div>
+            </section>
+
+            <!-- Prayers Section -->
+            <section id="prayers" class="section">
+                <h2 class="section-title">Prayers</h2>
+
+                <div class="card">
+                    <div class="card-title">New Prayer Request</div>
+                    <div class="form-group">
+                        <label>Prayer Name / Title</label>
+                        <input type="text" id="prayer-name" placeholder="e.g., Family Healing, New Job">
+                    </div>
+                    <div class="form-group">
+                        <label>Prayer</label>
+                        <textarea id="prayer-text" placeholder="Write your prayer here..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="prayer-status">
+                            <option value="active">Active</option>
+                            <option value="answered">Answered</option>
+                            <option value="archived">Archived</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="save-prayer">Save Prayer</button>
+                </div>
+
+                <div id="prayer-list" class="item-list"></div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="section">
+                <h2 class="section-title">Profile</h2>
+                <p class="profile-subtitle">your quiet account, kept on this device</p>
+
+                <div class="profile-section">
+                    <h3>Personal Info</h3>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Full name</label>
+                            <input type="text" id="profile-name" placeholder="Your name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profile-email" placeholder="your@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Short bio</label>
+                            <textarea id="profile-bio" placeholder="A little about yourself..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Notification Preferences</h3>
+                    <div class="card">
+                        <div class="toggle-switch">
+                            <div>
+                                <div class="toggle-label">Sermon reminders</div>
+                                <div class="toggle-desc">A gentle nudge to jot down Sunday's sermon</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="notif-sermon">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-switch">
+                            <div>
+                                <div class="toggle-label">Daily verse</div>
+                                <div class="toggle-desc">Surface a saved verse each morning</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="notif-verse">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-switch">
+                            <div>
+                                <div class="toggle-label">Prayer reminders</div>
+                                <div class="toggle-desc">Prompt to revisit active prayer requests</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="notif-prayer">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Advanced Settings</h3>
+                    <div class="card">
+                        <div class="toggle-switch">
+                            <div>
+                                <div class="toggle-label">Theme</div>
+                                <div class="toggle-desc">Choose how Kimya looks on this device</div>
+                            </div>
+                            <select id="theme-select">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="system">System</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Data Management</h3>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Backup & Restore</label>
+                            <p class="help-text">Export everything or restore from a backup file</p>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" id="export-data">Export Data</button>
+                                <button class="btn btn-secondary" id="restore-btn">Restore Backup</button>
+                                <input type="file" id="import-file" class="hidden-file-input" accept=".json">
+                            </div>
+                        </div>
+                        <hr class="divider">
+                        <div class="form-group">
+                            <label class="danger-label">Danger Zone</label>
+                            <p class="help-text">Erase every Kimya entry stored on this device</p>
+                            <button class="btn btn-danger" id="clear-btn">Clear All Data</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Clear Data Modal -->
+    <div id="clear-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>Clear All Data?</h2>
+            <p class="modal-text">This will permanently delete all your sermons, verses, prayers, and journal entries. This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancel-clear">Cancel</button>
+                <button class="btn btn-danger" id="confirm-clear">Yes, Clear Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
