@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kimya-v2';
+const CACHE_NAME = 'kimya-v3';
 const STATIC_ASSETS = [
     './',
     './index.html',
