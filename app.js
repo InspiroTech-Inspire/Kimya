@@ -65,8 +65,10 @@ function cacheElements() {
     els.verseList = document.getElementById('verse-list');
     els.prayerList = document.getElementById('prayer-list');
 
-    // Modal
+    // Modals
     els.clearModal = document.getElementById('clear-modal');
+    els.shareModal = document.getElementById('share-modal');
+    els.shareCanvas = document.getElementById('share-canvas');
     els.toast = document.getElementById('toast');
 }
 
@@ -96,7 +98,11 @@ function bindEvents() {
     document.getElementById('restore-btn').addEventListener('click', () => {
         document.getElementById('import-file').click();
     });
-    document.getElementById('import-file').addEventListener('change', importData);
+    // FIX: this used to pass the raw Event object into importData(), which
+    // expected an <input>. importData() would then throw trying to read
+    // .files off the Event, so Restore Backup silently failed. Passing
+    // e.target (the actual <input>) fixes it.
+    document.getElementById('import-file').addEventListener('change', (e) => importData(e.target));
     document.getElementById('clear-btn').addEventListener('click', confirmClear);
     document.getElementById('cancel-clear').addEventListener('click', closeModal);
     document.getElementById('confirm-clear').addEventListener('click', clearAllData);
@@ -106,9 +112,24 @@ function bindEvents() {
         if (e.target === els.clearModal) closeModal();
     });
 
+    // Share modal
+    document.getElementById('share-close').addEventListener('click', closeShareModal);
+    document.getElementById('share-download').addEventListener('click', downloadShareCard);
+    document.getElementById('share-native').addEventListener('click', shareShareCard);
+    els.shareModal.addEventListener('click', (e) => {
+        if (e.target === els.shareModal) closeShareModal();
+    });
+    if (!navigator.share) {
+        const nativeBtn = document.getElementById('share-native');
+        if (nativeBtn) nativeBtn.style.display = 'none';
+    }
+
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Escape') {
+            closeModal();
+            closeShareModal();
+        }
     });
 }
 
@@ -200,6 +221,17 @@ function deleteSermon(id) {
     showToast('Sermon deleted');
 }
 
+function shareSermon(id) {
+    const sermon = store.sermons.find(s => s.id === id);
+    if (!sermon) return;
+    openShareCard({
+        kind: 'sermon',
+        title: sermon.topic,
+        subtitle: [formatDate(sermon.date), sermon.preacher].filter(Boolean).join('  •  '),
+        body: stripHtml(sermon.notes)
+    });
+}
+
 function renderSermons() {
     if (store.sermons.length === 0) {
         els.sermonList.innerHTML = emptyState('📖', 'No sermon notes yet. Fill in the form above and save your first note.');
@@ -213,9 +245,13 @@ function renderSermons() {
                     <div class="item-title">${escapeHtml(sermon.topic)}</div>
                     <div class="item-meta">${formatDate(sermon.date)} ${sermon.preacher ? '• ' + escapeHtml(sermon.preacher) : ''}</div>
                 </div>
+                <button class="item-collapse-btn" onclick="toggleItemCollapse(this)" aria-expanded="false" title="Show more">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
             </div>
-            <div class="item-body rich-render">${sermon.notes}</div>
+            <div class="item-body collapsed rich-render">${sermon.notes}</div>
             <div class="item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="shareSermon(${sermon.id})">Share</button>
                 <button class="btn btn-sm btn-secondary" onclick="deleteSermon(${sermon.id})">Delete</button>
             </div>
         </div>
@@ -260,6 +296,17 @@ function deleteVerse(id) {
     showToast('Verse deleted');
 }
 
+function shareVerse(id) {
+    const verse = store.verses.find(v => v.id === id);
+    if (!verse) return;
+    openShareCard({
+        kind: 'verse',
+        title: verse.ref,
+        subtitle: verse.note || '',
+        body: verse.text
+    });
+}
+
 function renderVerses() {
     if (store.verses.length === 0) {
         els.verseList.innerHTML = emptyState('✨', 'No favourite verses yet. Save the verses that speak to you so they are always close.');
@@ -272,10 +319,16 @@ function renderVerses() {
                 <div>
                     <div class="item-title">${escapeHtml(verse.ref)}</div>
                 </div>
+                <button class="item-collapse-btn" onclick="toggleItemCollapse(this)" aria-expanded="false" title="Show more">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
             </div>
-            <div class="item-body" style="font-style: italic; margin-bottom: 0.75rem;">"${escapeHtml(verse.text)}"</div>
-            ${verse.note ? `<div class="item-body" style="font-size: 0.9rem; color: var(--text-secondary); border-left: 3px solid var(--accent); padding-left: 1rem;">${escapeHtml(verse.note)}</div>` : ''}
+            <div class="item-body collapsed">
+                <div style="font-style: italic; margin-bottom: 0.75rem;">"${escapeHtml(verse.text)}"</div>
+                ${verse.note ? `<div style="font-size: 0.9rem; color: var(--text-secondary); border-left: 3px solid var(--accent); padding-left: 1rem;">${escapeHtml(verse.note)}</div>` : ''}
+            </div>
             <div class="item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="shareVerse(${verse.id})">Share</button>
                 <button class="btn btn-sm btn-secondary" onclick="deleteVerse(${verse.id})">Delete</button>
             </div>
         </div>
@@ -320,6 +373,17 @@ function deletePrayer(id) {
     showToast('Prayer deleted');
 }
 
+function sharePrayer(id) {
+    const prayer = store.prayers.find(p => p.id === id);
+    if (!prayer) return;
+    openShareCard({
+        kind: 'prayer',
+        title: prayer.name,
+        subtitle: 'Prayer  •  ' + prayer.status,
+        body: prayer.text
+    });
+}
+
 function renderPrayers() {
     if (store.prayers.length === 0) {
         els.prayerList.innerHTML = emptyState('🙏', 'No prayers saved yet. Give your first prayer a name above and save it here.');
@@ -336,9 +400,13 @@ function renderPrayers() {
                         <span>${formatDate(prayer.createdAt)}</span>
                     </div>
                 </div>
+                <button class="item-collapse-btn" onclick="toggleItemCollapse(this)" aria-expanded="false" title="Show more">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
             </div>
-            <div class="item-body">${escapeHtml(prayer.text)}</div>
+            <div class="item-body collapsed">${escapeHtml(prayer.text)}</div>
             <div class="item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="sharePrayer(${prayer.id})">Share</button>
                 <button class="btn btn-sm btn-secondary" onclick="deletePrayer(${prayer.id})">Delete</button>
             </div>
         </div>
@@ -373,6 +441,17 @@ function deleteJournal(id) {
     showToast('Entry deleted');
 }
 
+function shareJournal(id) {
+    const entry = store.journal.find(j => j.id === id);
+    if (!entry) return;
+    openShareCard({
+        kind: 'journal',
+        title: 'Journal',
+        subtitle: formatDateTime(entry.createdAt),
+        body: entry.text
+    });
+}
+
 function renderJournal() {
     if (store.journal.length === 0) {
         els.journalList.innerHTML = emptyState('📝', 'No journal entries yet. Write your first reflection above.');
@@ -383,13 +462,29 @@ function renderJournal() {
         <div class="item">
             <div class="item-header">
                 <div class="item-meta">${formatDateTime(entry.createdAt)}</div>
+                <button class="item-collapse-btn" onclick="toggleItemCollapse(this)" aria-expanded="false" title="Show more">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
             </div>
-            <div class="item-body">${escapeHtml(entry.text)}</div>
+            <div class="item-body collapsed">${escapeHtml(entry.text)}</div>
             <div class="item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="shareJournal(${entry.id})">Share</button>
                 <button class="btn btn-sm btn-secondary" onclick="deleteJournal(${entry.id})">Delete</button>
             </div>
         </div>
     `).join('');
+}
+
+// ========== Item Collapse ==========
+function toggleItemCollapse(btn) {
+    const item = btn.closest('.item');
+    const body = item ? item.querySelector('.item-body') : null;
+    if (!body) return;
+
+    const isCollapsed = body.classList.toggle('collapsed');
+    btn.classList.toggle('expanded', !isCollapsed);
+    btn.setAttribute('aria-expanded', String(!isCollapsed));
+    btn.title = isCollapsed ? 'Show more' : 'Show less';
 }
 
 // ========== Profile ==========
@@ -499,6 +594,199 @@ function clearAllData() {
     showToast('All data cleared');
 }
 
+// ========== Share Cards ==========
+function openShareCard({ kind, title, subtitle, body }) {
+    drawShareCard(els.shareCanvas, { kind, title, subtitle, body });
+    els.shareModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeShareModal() {
+    els.shareModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function downloadShareCard() {
+    els.shareCanvas.toBlob(blob => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kimya-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Image saved');
+    }, 'image/png');
+}
+
+function shareShareCard() {
+    els.shareCanvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], 'kimya.png', { type: 'image/png' });
+        try {
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'Kimya', text: 'Shared from Kimya' });
+            } else if (navigator.share) {
+                await navigator.share({ title: 'Kimya', text: 'Shared from Kimya' });
+            } else {
+                showToast('Sharing not supported here — try Download Image');
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') showToast('Could not share');
+        }
+    }, 'image/png');
+}
+
+function drawShareCard(canvas, { kind, title, subtitle, body }) {
+    const W = 1080, H = 1350;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Fixed brand palette so shared cards look consistent regardless of the
+    // in-app light/dark setting.
+    const palette = {
+        bg: '#f5f2ed',
+        bg2: '#efe9df',
+        surface: '#ffffff',
+        text: '#2c2420',
+        textSecondary: '#6b5e55',
+        accent: '#8b7355',
+        accentLight: '#a89070',
+        border: '#e0d8d0'
+    };
+
+    const labels = {
+        sermon: 'SERMON NOTE',
+        verse: 'BIBLE VERSE',
+        prayer: 'PRAYER',
+        journal: 'JOURNAL'
+    };
+
+    // Background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, palette.bg);
+    grad.addColorStop(1, palette.bg2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Card surface
+    const margin = 56;
+    const cardX = margin, cardY = margin, cardW = W - margin * 2, cardH = H - margin * 2;
+    ctx.fillStyle = palette.surface;
+    roundRect(ctx, cardX, cardY, cardW, cardH, 32);
+    ctx.fill();
+    ctx.strokeStyle = palette.border;
+    ctx.lineWidth = 2;
+    roundRect(ctx, cardX, cardY, cardW, cardH, 32);
+    ctx.stroke();
+
+    const padX = cardX + 72;
+    let cursorY = cardY + 110;
+
+    // Kicker label
+    ctx.fillStyle = palette.accent;
+    ctx.font = '700 28px -apple-system, "Segoe UI", sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(labels[kind] || 'KIMYA', padX, cursorY);
+
+    // Accent rule
+    cursorY += 28;
+    ctx.fillStyle = palette.accentLight;
+    ctx.fillRect(padX, cursorY, 64, 5);
+    cursorY += 70;
+
+    // Title
+    ctx.fillStyle = palette.text;
+    ctx.font = '700 56px Georgia, "Times New Roman", serif';
+    let titleLines = wrapCanvasText(ctx, title || 'Untitled', cardW - 144);
+    if (titleLines.length > 3) {
+        titleLines = titleLines.slice(0, 3);
+        titleLines[2] = titleLines[2].replace(/\s+\S*$/, '') + '…';
+    }
+    titleLines.forEach((l, i) => ctx.fillText(l, padX, cursorY + i * 64));
+    cursorY += titleLines.length * 64 + 8;
+
+    // Subtitle
+    if (subtitle) {
+        ctx.fillStyle = palette.textSecondary;
+        ctx.font = '400 32px -apple-system, "Segoe UI", sans-serif';
+        ctx.fillText(subtitle, padX, cursorY);
+        cursorY += 50;
+    }
+
+    cursorY += 30;
+
+    // Decorative quote mark for verses
+    if (kind === 'verse') {
+        ctx.fillStyle = palette.border;
+        ctx.font = '700 170px Georgia, serif';
+        ctx.fillText('\u201C', padX - 12, cursorY + 100);
+        cursorY += 90;
+    }
+
+    // Body text
+    ctx.fillStyle = palette.text;
+    ctx.font = kind === 'verse'
+        ? 'italic 500 44px Georgia, "Times New Roman", serif'
+        : '400 38px -apple-system, "Segoe UI", sans-serif';
+
+    const bodyMaxWidth = cardW - 144;
+    const lineHeight = kind === 'verse' ? 62 : 56;
+    const maxBodyBottom = cardY + cardH - 130;
+    const maxLines = Math.max(2, Math.floor((maxBodyBottom - cursorY) / lineHeight));
+
+    let lines = wrapCanvasText(ctx, body || '', bodyMaxWidth);
+    if (lines.length > maxLines) {
+        lines = lines.slice(0, maxLines);
+        lines[maxLines - 1] = lines[maxLines - 1].replace(/\s+\S*$/, '').replace(/[.,;:]?$/, '') + '\u2026';
+    }
+    lines.forEach((l, i) => ctx.fillText(l, padX, cursorY + i * lineHeight));
+
+    // Footer / brand
+    ctx.fillStyle = palette.accent;
+    ctx.font = '700 34px Georgia, "Times New Roman", serif';
+    ctx.fillText('Kimya', padX, cardY + cardH - 56);
+    ctx.fillStyle = palette.textSecondary;
+    ctx.font = '400 24px -apple-system, sans-serif';
+    ctx.fillText('sermons, verses & prayers', padX + 130, cardY + cardH - 56);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+    const words = String(text || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+    const lines = [];
+    let line = '';
+    words.forEach(word => {
+        const test = line ? line + ' ' + word : word;
+        if (line && ctx.measureText(test).width > maxWidth) {
+            lines.push(line);
+            line = word;
+        } else {
+            line = test;
+        }
+    });
+    if (line) lines.push(line);
+    return lines.length ? lines : [''];
+}
+
+function stripHtml(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html || '';
+    return div.textContent || div.innerText || '';
+}
+
 // ========== Service Worker ==========
 function initServiceWorker() {
     if ('serviceWorker' in navigator) {
@@ -599,10 +887,6 @@ function initRichEditor() {
                 case 'u': e.preventDefault(); document.execCommand('underline'); break;
             }
         }
-        // Enter key handling - ensure paragraphs instead of divs
-        if (e.key === 'Enter' && !e.shiftKey) {
-            // Let default behavior happen, but clean up on input
-        }
     });
 
     // Clean up pasted content
@@ -637,7 +921,6 @@ function updateToolbarState(toolbar, editor) {
 function getRichContent(elementId) {
     const el = document.getElementById(elementId);
     if (!el) return '';
-    // Clean up empty paragraphs and normalize
     let html = el.innerHTML.trim();
     if (html === '<br>' || html === '<div><br></div>') return '';
     return html;
