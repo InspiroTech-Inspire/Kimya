@@ -16,7 +16,6 @@
     --radius-xl: 2rem;
     --transition: all 0.2s ease;
 }
-
 [data-theme="dark"] {
     --bg: #1a1816;
     --surface: #252220;
@@ -27,18 +26,15 @@
     --border: #3a3530;
     --shadow: rgba(0,0,0,0.2);
 }
-
 /* ========== Reset & Base ========== */
 *, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
 html {
     scroll-behavior: smooth;
 }
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: var(--bg);
@@ -47,7 +43,6 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-
 /* ========== Layout ========== */
 .app-container {
     max-width: 800px;
@@ -56,7 +51,6 @@ body {
     display: flex;
     flex-direction: column;
 }
-
 /* ========== Header ========== */
 .header {
     padding: 2rem 1.5rem 1rem;
@@ -67,19 +61,16 @@ body {
     z-index: 10;
     border-bottom: 1px solid var(--border);
 }
-
 .header h1 {
     font-size: 1.5rem;
     font-weight: 600;
     letter-spacing: -0.02em;
     margin-bottom: 0.25rem;
 }
-
 .header p {
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
-
 /* ========== Navigation ========== */
 .nav {
     display: flex;
@@ -95,11 +86,9 @@ body {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
-
 .nav::-webkit-scrollbar {
     display: none;
 }
-
 .nav-btn {
     padding: 0.6rem 1.2rem;
     border: 1px solid var(--border);
@@ -113,45 +102,37 @@ body {
     white-space: nowrap;
     font-family: inherit;
 }
-
 .nav-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
 }
-
 .nav-btn.active {
     background: var(--accent);
     color: white;
     border-color: var(--accent);
 }
-
 /* ========== Main Content ========== */
 .main {
     flex: 1;
     padding: 1.5rem;
     overflow-y: auto;
 }
-
 .section {
     display: none;
     animation: fadeIn 0.3s ease;
 }
-
 .section.active {
     display: block;
 }
-
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
 .section-title {
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
     font-weight: 600;
 }
-
 /* ========== Cards ========== */
 .card {
     background: var(--surface);
@@ -161,7 +142,6 @@ body {
     box-shadow: 0 2px 8px var(--shadow);
     border: 1px solid var(--border);
 }
-
 .card-title {
     font-size: 0.875rem;
     text-transform: uppercase;
@@ -170,16 +150,13 @@ body {
     margin-bottom: 1rem;
     font-weight: 600;
 }
-
 /* ========== Forms ========== */
 .form-group {
     margin-bottom: 1rem;
 }
-
 .form-group:last-child {
     margin-bottom: 0;
 }
-
 label {
     display: block;
     font-size: 0.875rem;
@@ -187,7 +164,6 @@ label {
     margin-bottom: 0.5rem;
     color: var(--text-secondary);
 }
-
 input, textarea, select {
     width: 100%;
     padding: 0.75rem 1rem;
@@ -199,17 +175,14 @@ input, textarea, select {
     font-size: 1rem;
     transition: border-color 0.2s;
 }
-
 input:focus, textarea:focus, select:focus {
     outline: none;
     border-color: var(--accent);
 }
-
 textarea {
     resize: vertical;
     min-height: 120px;
 }
-
 select {
     cursor: pointer;
     appearance: none;
@@ -218,7 +191,6 @@ select {
     background-position: right 1rem center;
     padding-right: 2.5rem;
 }
-
 /* ========== Buttons ========== */
 .btn {
     display: inline-flex;
@@ -236,64 +208,52 @@ select {
     transition: var(--transition);
     font-family: inherit;
 }
-
 .btn:hover {
     background: var(--accent-light);
     transform: translateY(-1px);
 }
-
 .btn:active {
     transform: translateY(0);
 }
-
 .btn-secondary {
     background: transparent;
     color: var(--text-secondary);
     border: 1px solid var(--border);
 }
-
 .btn-secondary:hover {
     background: var(--bg);
 }
-
 .btn-danger {
     background: var(--danger);
 }
-
 .btn-danger:hover {
     filter: brightness(1.1);
 }
-
 .btn-sm {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
 }
-
 .btn-group {
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
 }
-
 /* ========== Lists & Items ========== */
 .empty-state {
     text-align: center;
     padding: 3rem 1rem;
     color: var(--text-secondary);
 }
-
 .empty-state-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
 }
-
 .item-list {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
-
 .item {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -302,12 +262,10 @@ select {
     transition: var(--transition);
     position: relative;
 }
-
 .item:hover {
     box-shadow: 0 4px 12px var(--shadow);
     transform: translateY(-2px);
 }
-
 .item-header {
     display: flex;
     justify-content: space-between;
@@ -315,14 +273,12 @@ select {
     margin-bottom: 0.75rem;
     gap: 1rem;
 }
-
 .item-title {
     font-weight: 600;
     font-size: 1.05rem;
     margin-bottom: 0.25rem;
     word-break: break-word;
 }
-
 .item-meta {
     font-size: 0.85rem;
     color: var(--text-secondary);
@@ -331,20 +287,17 @@ select {
     gap: 0.5rem;
     flex-wrap: wrap;
 }
-
 .item-body {
     color: var(--text);
     line-height: 1.7;
     white-space: pre-wrap;
     word-break: break-word;
 }
-
 .item-actions {
     display: flex;
     gap: 0.5rem;
     margin-top: 1rem;
 }
-
 .badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -356,28 +309,23 @@ select {
     font-weight: 500;
     text-transform: capitalize;
 }
-
 .badge.answered {
     background: var(--success);
     color: white;
     border-color: var(--success);
 }
-
 .badge.archived {
     opacity: 0.7;
 }
-
 /* ========== Profile Section ========== */
 .profile-subtitle {
     color: var(--text-secondary);
     margin-bottom: 2rem;
     font-size: 0.95rem;
 }
-
 .profile-section {
     margin-bottom: 2rem;
 }
-
 .profile-section h3 {
     font-size: 0.85rem;
     margin-bottom: 1rem;
@@ -386,7 +334,6 @@ select {
     letter-spacing: 0.05em;
     font-weight: 600;
 }
-
 .toggle-switch {
     display: flex;
     align-items: center;
@@ -395,38 +342,31 @@ select {
     border-bottom: 1px solid var(--border);
     gap: 1rem;
 }
-
 .toggle-switch:last-child {
     border-bottom: none;
 }
-
 .toggle-label {
     font-weight: 500;
     font-size: 0.95rem;
 }
-
 .toggle-desc {
     font-size: 0.85rem;
     color: var(--text-secondary);
     margin-top: 0.25rem;
 }
-
 .help-text {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin-bottom: 1rem;
 }
-
 .danger-label {
     color: var(--danger);
 }
-
 .divider {
     border: none;
     border-top: 1px solid var(--border);
     margin: 1.5rem 0;
 }
-
 /* ========== Toggle Switch ========== */
 .switch {
     position: relative;
@@ -435,13 +375,11 @@ select {
     height: 28px;
     flex-shrink: 0;
 }
-
 .switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
-
 .slider {
     position: absolute;
     cursor: pointer;
@@ -453,7 +391,6 @@ select {
     transition: 0.3s;
     border-radius: 28px;
 }
-
 .slider::before {
     position: absolute;
     content: "";
@@ -465,15 +402,12 @@ select {
     transition: 0.3s;
     border-radius: 50%;
 }
-
 input:checked + .slider {
     background-color: var(--accent);
 }
-
 input:checked + .slider::before {
     transform: translateX(22px);
 }
-
 /* ========== Modal ========== */
 .modal-overlay {
     display: none;
@@ -489,11 +423,9 @@ input:checked + .slider::before {
     padding: 1rem;
     backdrop-filter: blur(4px);
 }
-
 .modal-overlay.active {
     display: flex;
 }
-
 .modal {
     background: var(--surface);
     border-radius: var(--radius-lg);
@@ -505,32 +437,26 @@ input:checked + .slider::before {
     box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     animation: modalIn 0.3s ease;
 }
-
 @keyframes modalIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
-
 .modal h2 {
     margin-bottom: 1rem;
     font-size: 1.25rem;
 }
-
 .modal-text {
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
     line-height: 1.6;
 }
-
 .modal-actions {
     display: flex;
     gap: 1rem;
 }
-
 .modal-actions .btn {
     flex: 1;
 }
-
 /* ========== Toast ========== */
 .toast {
     position: fixed;
@@ -550,82 +476,65 @@ input:checked + .slider::before {
     pointer-events: none;
     white-space: nowrap;
 }
-
 .toast.show {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
 }
-
 /* ========== Utilities ========== */
 .hidden-file-input {
     display: none;
 }
-
 /* ========== Scrollbar ========== */
 ::-webkit-scrollbar {
     width: 8px;
 }
-
 ::-webkit-scrollbar-track {
     background: var(--bg);
 }
-
 ::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
     background: var(--accent-light);
 }
-
 /* ========== Responsive ========== */
 @media (max-width: 640px) {
     .header {
         padding: 1.5rem 1rem 0.75rem;
     }
-
     .main {
         padding: 1rem;
     }
-
     .nav {
         top: 70px;
         padding: 0.75rem;
     }
-
     .nav-btn {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
     }
-
     .card {
         padding: 1.25rem;
     }
-
     .modal {
         padding: 1.5rem;
     }
-
     .btn-group {
         flex-direction: column;
     }
-
     .btn-group .btn {
         width: 100%;
     }
 }
-
 /* ========== Print Styles ========== */
 @media print {
     .nav, .btn, .item-actions, .modal-overlay, .toast {
         display: none !important;
     }
-
     .section {
         display: block !important;
     }
-
     .item {
         break-inside: avoid;
         page-break-inside: avoid;
@@ -638,7 +547,6 @@ input:checked + .slider::before {
     background: var(--bg);
     overflow: hidden;
 }
-
 .rich-toolbar {
     display: flex;
     align-items: center;
@@ -648,7 +556,6 @@ input:checked + .slider::before {
     border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
 }
-
 .rich-btn {
     display: flex;
     align-items: center;
@@ -663,32 +570,27 @@ input:checked + .slider::before {
     transition: var(--transition);
     padding: 0;
 }
-
 .rich-btn:hover {
     background: var(--bg);
     color: var(--accent);
     border-color: var(--border);
 }
-
 .rich-btn.active {
     background: var(--accent);
     color: white;
     border-color: var(--accent);
 }
-
 .rich-btn svg {
     width: 16px;
     height: 16px;
     pointer-events: none;
 }
-
 .rich-divider {
     width: 1px;
     height: 20px;
     background: var(--border);
     margin: 0 0.25rem;
 }
-
 .rich-content {
     min-height: 160px;
     padding: 0.75rem 1rem;
@@ -700,49 +602,39 @@ input:checked + .slider::before {
     overflow-y: auto;
     max-height: 400px;
 }
-
 .rich-content:empty::before {
     content: attr(placeholder);
     color: var(--text-secondary);
     opacity: 0.6;
     pointer-events: none;
 }
-
 .rich-content:focus {
     background: var(--surface);
 }
-
 .rich-content p {
     margin-bottom: 0.75rem;
 }
-
 .rich-content p:last-child {
     margin-bottom: 0;
 }
-
 .rich-content ul, .rich-content ol {
     margin: 0.5rem 0;
     padding-left: 1.5rem;
 }
-
 .rich-content li {
     margin-bottom: 0.35rem;
 }
-
 .rich-content b, .rich-content strong {
     font-weight: 700;
 }
-
 .rich-content i, .rich-content em {
     font-style: italic;
 }
-
 .rich-content u {
     text-decoration: underline;
     text-decoration-color: var(--accent);
     text-decoration-thickness: 2px;
 }
-
 .rich-content blockquote {
     border-left: 3px solid var(--accent);
     padding-left: 1rem;
@@ -750,39 +642,31 @@ input:checked + .slider::before {
     color: var(--text-secondary);
     font-style: italic;
 }
-
 /* Rendered rich text in items */
 .rich-render p {
     margin-bottom: 0.75rem;
 }
-
 .rich-render p:last-child {
     margin-bottom: 0;
 }
-
 .rich-render ul, .rich-render ol {
     margin: 0.5rem 0;
     padding-left: 1.5rem;
 }
-
 .rich-render li {
     margin-bottom: 0.35rem;
 }
-
 .rich-render b, .rich-render strong {
     font-weight: 700;
 }
-
 .rich-render i, .rich-render em {
     font-style: italic;
 }
-
 .rich-render u {
     text-decoration: underline;
     text-decoration-color: var(--accent);
     text-decoration-thickness: 2px;
 }
-
 .rich-render blockquote {
     border-left: 3px solid var(--accent);
     padding-left: 1rem;
@@ -805,26 +689,21 @@ input:checked + .slider::before {
     cursor: pointer;
     transition: var(--transition);
 }
-
 .item-collapse-btn:hover {
     color: var(--accent);
     border-color: var(--accent);
 }
-
 .item-collapse-btn svg {
     transition: transform 0.25s ease;
 }
-
 .item-collapse-btn.expanded svg {
     transform: rotate(180deg);
 }
-
 .item-body.collapsed {
     max-height: 4.8em;
     overflow: hidden;
     position: relative;
 }
-
 .item-body.collapsed::after {
     content: '';
     position: absolute;
@@ -835,13 +714,11 @@ input:checked + .slider::before {
     background: linear-gradient(to bottom, transparent, var(--surface));
     pointer-events: none;
 }
-
 /* ========== Share Modal & Card ========== */
 .share-modal {
     max-width: 480px;
     text-align: center;
 }
-
 .share-preview {
     width: 100%;
     height: auto;
@@ -852,16 +729,13 @@ input:checked + .slider::before {
     margin-bottom: 1.5rem;
     background: var(--surface);
 }
-
 .share-actions {
     flex-wrap: wrap;
 }
-
 .share-actions .btn {
     flex: 1 1 auto;
     min-width: 120px;
 }
-
 /* ========== Visual Polish ========== */
 .header h1 {
     background: linear-gradient(135deg, var(--text), var(--accent));
@@ -870,20 +744,22 @@ input:checked + .slider::before {
     color: transparent;
     display: inline-block;
 }
-
 .btn {
     box-shadow: 0 2px 6px var(--shadow);
 }
-
 .nav-btn.active {
     box-shadow: 0 3px 10px var(--shadow);
 }
-
 :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
-/* ========== NEW: Search Bar ========== */
+
+/* =========================================================
+   NEW FEATURES: Search, Autosave, Stats, Bible Links
+   ========================================================= */
+
+/* Search Bar */
 .search-container {
     margin-top: 1rem;
     position: relative;
@@ -908,7 +784,7 @@ input:checked + .slider::before {
     pointer-events: none;
 }
 
-/* ========== NEW: Autosave Status ========== */
+/* Autosave Status */
 .autosave-status {
     display: inline-block;
     margin-top: 0.5rem;
@@ -920,7 +796,7 @@ input:checked + .slider::before {
 .autosave-status.saving { color: var(--accent); }
 .autosave-status.saved { color: var(--success); }
 
-/* ========== NEW: Stats Grid ========== */
+/* Stats Grid */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -942,7 +818,7 @@ input:checked + .slider::before {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* ========== NEW: Bible Links ========== */
+/* Bible Links */
 .bible-link {
     color: var(--accent);
     text-decoration: underline;
