@@ -883,3 +883,73 @@ input:checked + .slider::before {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
+/* ========== NEW: Search Bar ========== */
+.search-container {
+    margin-top: 1rem;
+    position: relative;
+}
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text);
+}
+.search-container::before {
+    content: '🔍';
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ========== NEW: Autosave Status ========== */
+.autosave-status {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    height: 1.2em;
+    transition: opacity 0.3s;
+}
+.autosave-status.saving { color: var(--accent); }
+.autosave-status.saved { color: var(--success); }
+
+/* ========== NEW: Stats Grid ========== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    text-align: center;
+}
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+@media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ========== NEW: Bible Links ========== */
+.bible-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: var(--accent-light);
+    text-underline-offset: 3px;
+    font-weight: 500;
+}
+.bible-link:hover {
+    color: var(--accent-light);
+}
