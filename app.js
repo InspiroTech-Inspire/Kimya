@@ -1,5 +1,4 @@
 /* ========== Kimya App - Offline First Journal ========== */
-
 // ========== Data Store ==========
 const store = {
     sermons: [],
@@ -14,8 +13,16 @@ const store = {
         theme: 'light'
     }
 };
-
 const STORAGE_KEY = 'kimya-data';
+
+// ========== NEW: Autosave Draft Keys ==========
+const DRAFT_KEYS = {
+    journal: 'kimya-draft-journal',
+    sermon: 'kimya-draft-sermon',
+    verse: 'kimya-draft-verse',
+    prayer: 'kimya-draft-prayer'
+};
+let autosaveTimeout;
 
 // ========== DOM Elements Cache ==========
 const els = {};
@@ -27,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTodayDate();
     bindEvents();
     initRichEditor();
+    initAutosave(); // Load drafts
     renderAll();
     applyTheme();
     initServiceWorker();
@@ -36,7 +44,7 @@ function cacheElements() {
     // Navigation
     els.navBtns = document.querySelectorAll('.nav-btn');
     els.sections = document.querySelectorAll('.section');
-
+    
     // Forms
     els.journalEntry = document.getElementById('journal-entry');
     els.sermonDate = document.getElementById('sermon-date');
@@ -49,7 +57,7 @@ function cacheElements() {
     els.prayerName = document.getElementById('prayer-name');
     els.prayerText = document.getElementById('prayer-text');
     els.prayerStatus = document.getElementById('prayer-status');
-
+    
     // Profile
     els.profileName = document.getElementById('profile-name');
     els.profileEmail = document.getElementById('profile-email');
@@ -58,18 +66,22 @@ function cacheElements() {
     els.notifVerse = document.getElementById('notif-verse');
     els.notifPrayer = document.getElementById('notif-prayer');
     els.themeSelect = document.getElementById('theme-select');
-
+    
     // Lists
     els.journalList = document.getElementById('journal-list');
     els.sermonList = document.getElementById('sermon-list');
     els.verseList = document.getElementById('verse-list');
     els.prayerList = document.getElementById('prayer-list');
-
+    
     // Modals
     els.clearModal = document.getElementById('clear-modal');
     els.shareModal = document.getElementById('share-modal');
     els.shareCanvas = document.getElementById('share-canvas');
     els.toast = document.getElementById('toast');
+
+    // NEW: Search & Autosave UI
+    els.searchInput = document.getElementById('global-search');
+    els.autosaveStatus = document.getElementById('autosave-status');
 }
 
 function bindEvents() {
@@ -83,7 +95,7 @@ function bindEvents() {
     document.getElementById('save-sermon').addEventListener('click', saveSermon);
     document.getElementById('save-verse').addEventListener('click', saveVerse);
     document.getElementById('save-prayer').addEventListener('click', savePrayer);
-
+    
     // Profile
     [els.profileName, els.profileEmail, els.profileBio].forEach(el => {
         el.addEventListener('change', saveProfile);
@@ -92,26 +104,22 @@ function bindEvents() {
         el.addEventListener('change', saveProfile);
     });
     els.themeSelect.addEventListener('change', saveProfile);
-
+    
     // Data management
     document.getElementById('export-data').addEventListener('click', exportData);
     document.getElementById('restore-btn').addEventListener('click', () => {
         document.getElementById('import-file').click();
     });
-    // FIX: this used to pass the raw Event object into importData(), which
-    // expected an <input>. importData() would then throw trying to read
-    // .files off the Event, so Restore Backup silently failed. Passing
-    // e.target (the actual <input>) fixes it.
     document.getElementById('import-file').addEventListener('change', (e) => importData(e.target));
     document.getElementById('clear-btn').addEventListener('click', confirmClear);
     document.getElementById('cancel-clear').addEventListener('click', closeModal);
     document.getElementById('confirm-clear').addEventListener('click', clearAllData);
-
+    
     // Modal overlay click
     els.clearModal.addEventListener('click', (e) => {
         if (e.target === els.clearModal) closeModal();
     });
-
+    
     // Share modal
     document.getElementById('share-close').addEventListener('click', closeShareModal);
     document.getElementById('share-download').addEventListener('click', downloadShareCard);
@@ -119,11 +127,12 @@ function bindEvents() {
     els.shareModal.addEventListener('click', (e) => {
         if (e.target === els.shareModal) closeShareModal();
     });
+    
     if (!navigator.share) {
         const nativeBtn = document.getElementById('share-native');
         if (nativeBtn) nativeBtn.style.display = 'none';
     }
-
+    
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -131,17 +140,170 @@ function bindEvents() {
             closeShareModal();
         }
     });
+
+    // NEW: Global Search Filter
+    if (els.searchInput) {
+        els.searchInput.addEventListener('input', (e) => filterCurrentSection(e.target.value));
+    }
+
+    // NEW: Autosave Listeners
+    document.addEventListener('input', handleAutosaveInput);
+    document.addEventListener('change', handleAutosaveInput);
+}
+
+// ========== NEW: Autosave Engine ==========
+function initAutosave() {
+    loadDraft('journal');
+    loadDraft('sermon');
+    loadDraft('verse');
+    loadDraft('prayer');
+}
+
+function handleAutosaveInput(e) {
+    const target = e.target;
+    let draftKey = null;
+    
+    if (target === els.journalEntry) draftKey = 'journal';
+    else if ([els.sermonDate, els.sermonPreacher, els.sermonTopic, els.sermonNotes].includes(target)) draftKey = 'sermon';
+    else if ([els.verseRef, els.verseText, els.verseNote].includes(target)) draftKey = 'verse';
+    else if ([els.prayerName, els.prayerText, els.prayerStatus].includes(target)) draftKey = 'prayer';
+    
+    if (draftKey) {
+        showAutosaveStatus('saving');
+        clearTimeout(autosaveTimeout);
+        autosaveTimeout = setTimeout(() => {
+            saveDraft(draftKey);
+            showAutosaveStatus('saved');
+        }, 800);
+    }
+}
+
+function saveDraft(key) {
+    let data = {};
+    if (key === 'journal') data.text = els.journalEntry.value;
+    else if (key === 'sermon') {
+        data.date = els.sermonDate.value;
+        data.preacher = els.sermonPreacher.value;
+        data.topic = els.sermonTopic.value;
+        data.notes = getRichContent('sermon-notes');
+    } else if (key === 'verse') {
+        data.ref = els.verseRef.value;
+        data.text = els.verseText.value;
+        data.note = els.verseNote.value;
+    } else if (key === 'prayer') {
+        data.name = els.prayerName.value;
+        data.text = els.prayerText.value;
+        data.status = els.prayerStatus.value;
+    }
+    localStorage.setItem(DRAFT_KEYS[key], JSON.stringify(data));
+}
+
+function loadDraft(key) {
+    const raw = localStorage.getItem(DRAFT_KEYS[key]);
+    if (!raw) return;
+    try {
+        const data = JSON.parse(raw);
+        if (key === 'journal') els.journalEntry.value = data.text || '';
+        else if (key === 'sermon') {
+            if (data.date) els.sermonDate.value = data.date;
+            if (data.preacher) els.sermonPreacher.value = data.preacher;
+            if (data.topic) els.sermonTopic.value = data.topic;
+            if (data.notes) setRichContent('sermon-notes', data.notes);
+        } else if (key === 'verse') {
+            if (data.ref) els.verseRef.value = data.ref;
+            if (data.text) els.verseText.value = data.text;
+            if (data.note) els.verseNote.value = data.note;
+        } else if (key === 'prayer') {
+            if (data.name) els.prayerName.value = data.name;
+            if (data.text) els.prayerText.value = data.text;
+            if (data.status) els.prayerStatus.value = data.status;
+        }
+    } catch (e) {}
+}
+
+function clearDraft(key) {
+    localStorage.removeItem(DRAFT_KEYS[key]);
+}
+
+function showAutosaveStatus(state) {
+    if (!els.autosaveStatus) return;
+    if (state === 'saving') {
+        els.autosaveStatus.textContent = 'Saving draft...';
+        els.autosaveStatus.className = 'autosave-status saving';
+    } else {
+        els.autosaveStatus.textContent = '✓ Draft saved';
+        els.autosaveStatus.className = 'autosave-status saved';
+        setTimeout(() => { 
+            els.autosaveStatus.textContent = ''; 
+            els.autosaveStatus.className = 'autosave-status'; 
+        }, 2000);
+    }
+}
+
+// ========== NEW: Global Search Filter ==========
+function filterCurrentSection(query) {
+    const activeSection = document.querySelector('.section.active');
+    if (!activeSection) return;
+    
+    const q = query.toLowerCase().trim();
+    const items = activeSection.querySelectorAll('.item');
+    let visibleCount = 0;
+    
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (!q || text.includes(q)) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    const listContainer = activeSection.querySelector('.item-list');
+    if (!listContainer) return;
+    
+    let noResultsEl = listContainer.querySelector('.no-results');
+    if (q && visibleCount === 0) {
+        if (!noResultsEl) {
+            noResultsEl = document.createElement('div');
+            noResultsEl.className = 'empty-state no-results';
+            noResultsEl.innerHTML = '<div class="empty-state-icon">🔍</div><p>No results found.</p>';
+            listContainer.appendChild(noResultsEl);
+        }
+        noResultsEl.style.display = 'block';
+    } else if (noResultsEl) {
+        noResultsEl.style.display = 'none';
+    }
+    
+    const emptyState = listContainer.querySelector('.empty-state:not(.no-results)');
+    if (emptyState) {
+        emptyState.style.display = q ? 'none' : '';
+    }
+}
+
+// ========== NEW: Bible Reference Linker ==========
+function linkifyBible(text) {
+    if (!text) return '';
+    const books = '(?:Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Solomon|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)';
+    const regex = new RegExp(`\\b(${books}\\s\\d+:\\d+(?:-\\d+)?)\\b`, 'gi');
+    
+    return text.replace(regex, (match) => {
+        const url = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(match)}`;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="bible-link">${match}</a>`;
+    });
 }
 
 // ========== Navigation ==========
 function showSection(sectionId) {
     els.sections.forEach(s => s.classList.remove('active'));
     els.navBtns.forEach(b => b.classList.remove('active'));
-
     document.getElementById(sectionId).classList.add('active');
     document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+    
+    // Clear search when switching sections
+    if (els.searchInput) els.searchInput.value = '';
+    filterCurrentSection(''); 
 
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -156,8 +318,7 @@ function loadData() {
     } catch (e) {
         console.error('Failed to load data:', e);
     }
-
-    // Populate profile fields
+    
     els.profileName.value = store.profile.name || '';
     els.profileEmail.value = store.profile.email || '';
     els.profileBio.value = store.profile.bio || '';
@@ -186,12 +347,12 @@ function saveSermon() {
     const preacher = els.sermonPreacher.value.trim();
     const topic = els.sermonTopic.value.trim();
     const notes = getRichContent('sermon-notes').trim();
-
+    
     if (!topic || !notes) {
         showToast('Please fill in the topic and notes');
         return;
     }
-
+    
     store.sermons.unshift({
         id: Date.now(),
         date,
@@ -200,10 +361,12 @@ function saveSermon() {
         notes,
         createdAt: new Date().toISOString()
     });
-
+    
     saveToStorage();
     renderSermons();
+    renderStats();
     resetSermonForm();
+    clearDraft('sermon'); // Clear autosave draft
     showToast('Sermon note saved');
 }
 
@@ -218,6 +381,7 @@ function deleteSermon(id) {
     store.sermons = store.sermons.filter(s => s.id !== id);
     saveToStorage();
     renderSermons();
+    renderStats();
     showToast('Sermon deleted');
 }
 
@@ -237,7 +401,7 @@ function renderSermons() {
         els.sermonList.innerHTML = emptyState('📖', 'No sermon notes yet. Fill in the form above and save your first note.');
         return;
     }
-
+    
     els.sermonList.innerHTML = store.sermons.map(sermon => `
         <div class="item">
             <div class="item-header">
@@ -249,7 +413,7 @@ function renderSermons() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
             </div>
-            <div class="item-body collapsed rich-render">${sermon.notes}</div>
+            <div class="item-body collapsed rich-render">${linkifyBible(sermon.notes)}</div>
             <div class="item-actions">
                 <button class="btn btn-sm btn-secondary" onclick="shareSermon(${sermon.id})">Share</button>
                 <button class="btn btn-sm btn-secondary" onclick="deleteSermon(${sermon.id})">Delete</button>
@@ -263,12 +427,12 @@ function saveVerse() {
     const ref = els.verseRef.value.trim();
     const text = els.verseText.value.trim();
     const note = els.verseNote.value.trim();
-
+    
     if (!ref || !text) {
         showToast('Please fill in the reference and verse text');
         return;
     }
-
+    
     store.verses.unshift({
         id: Date.now(),
         ref,
@@ -276,10 +440,12 @@ function saveVerse() {
         note,
         createdAt: new Date().toISOString()
     });
-
+    
     saveToStorage();
     renderVerses();
+    renderStats();
     resetVerseForm();
+    clearDraft('verse');
     showToast('Verse saved');
 }
 
@@ -293,6 +459,7 @@ function deleteVerse(id) {
     store.verses = store.verses.filter(v => v.id !== id);
     saveToStorage();
     renderVerses();
+    renderStats();
     showToast('Verse deleted');
 }
 
@@ -312,7 +479,7 @@ function renderVerses() {
         els.verseList.innerHTML = emptyState('✨', 'No favourite verses yet. Save the verses that speak to you so they are always close.');
         return;
     }
-
+    
     els.verseList.innerHTML = store.verses.map(verse => `
         <div class="item">
             <div class="item-header">
@@ -324,8 +491,8 @@ function renderVerses() {
                 </button>
             </div>
             <div class="item-body collapsed">
-                <div style="font-style: italic; margin-bottom: 0.75rem;">"${escapeHtml(verse.text)}"</div>
-                ${verse.note ? `<div style="font-size: 0.9rem; color: var(--text-secondary); border-left: 3px solid var(--accent); padding-left: 1rem;">${escapeHtml(verse.note)}</div>` : ''}
+                <div style="font-style: italic; margin-bottom: 0.75rem;">"${linkifyBible(escapeHtml(verse.text))}"</div>
+                ${verse.note ? `<div style="font-size: 0.9rem; color: var(--text-secondary); border-left: 3px solid var(--accent); padding-left: 1rem;">${linkifyBible(escapeHtml(verse.note))}</div>` : ''}
             </div>
             <div class="item-actions">
                 <button class="btn btn-sm btn-secondary" onclick="shareVerse(${verse.id})">Share</button>
@@ -340,12 +507,12 @@ function savePrayer() {
     const name = els.prayerName.value.trim();
     const text = els.prayerText.value.trim();
     const status = els.prayerStatus.value;
-
+    
     if (!name || !text) {
         showToast('Please fill in the prayer name and text');
         return;
     }
-
+    
     store.prayers.unshift({
         id: Date.now(),
         name,
@@ -353,10 +520,12 @@ function savePrayer() {
         status,
         createdAt: new Date().toISOString()
     });
-
+    
     saveToStorage();
     renderPrayers();
+    renderStats();
     resetPrayerForm();
+    clearDraft('prayer');
     showToast('Prayer saved');
 }
 
@@ -370,6 +539,7 @@ function deletePrayer(id) {
     store.prayers = store.prayers.filter(p => p.id !== id);
     saveToStorage();
     renderPrayers();
+    renderStats();
     showToast('Prayer deleted');
 }
 
@@ -389,7 +559,7 @@ function renderPrayers() {
         els.prayerList.innerHTML = emptyState('🙏', 'No prayers saved yet. Give your first prayer a name above and save it here.');
         return;
     }
-
+    
     els.prayerList.innerHTML = store.prayers.map(prayer => `
         <div class="item">
             <div class="item-header">
@@ -404,7 +574,7 @@ function renderPrayers() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
             </div>
-            <div class="item-body collapsed">${escapeHtml(prayer.text)}</div>
+            <div class="item-body collapsed">${linkifyBible(escapeHtml(prayer.text))}</div>
             <div class="item-actions">
                 <button class="btn btn-sm btn-secondary" onclick="sharePrayer(${prayer.id})">Share</button>
                 <button class="btn btn-sm btn-secondary" onclick="deletePrayer(${prayer.id})">Delete</button>
@@ -416,21 +586,23 @@ function renderPrayers() {
 // ========== Journal ==========
 function saveJournal() {
     const text = els.journalEntry.value.trim();
-
+    
     if (!text) {
         showToast('Please write something first');
         return;
     }
-
+    
     store.journal.unshift({
         id: Date.now(),
         text,
         createdAt: new Date().toISOString()
     });
-
+    
     saveToStorage();
     renderJournal();
+    renderStats();
     els.journalEntry.value = '';
+    clearDraft('journal');
     showToast('Entry saved');
 }
 
@@ -438,6 +610,7 @@ function deleteJournal(id) {
     store.journal = store.journal.filter(j => j.id !== id);
     saveToStorage();
     renderJournal();
+    renderStats();
     showToast('Entry deleted');
 }
 
@@ -457,7 +630,7 @@ function renderJournal() {
         els.journalList.innerHTML = emptyState('📝', 'No journal entries yet. Write your first reflection above.');
         return;
     }
-
+    
     els.journalList.innerHTML = store.journal.map(entry => `
         <div class="item">
             <div class="item-header">
@@ -466,7 +639,7 @@ function renderJournal() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
             </div>
-            <div class="item-body collapsed">${escapeHtml(entry.text)}</div>
+            <div class="item-body collapsed">${linkifyBible(escapeHtml(entry.text))}</div>
             <div class="item-actions">
                 <button class="btn btn-sm btn-secondary" onclick="shareJournal(${entry.id})">Share</button>
                 <button class="btn btn-sm btn-secondary" onclick="deleteJournal(${entry.id})">Delete</button>
@@ -475,12 +648,24 @@ function renderJournal() {
     `).join('');
 }
 
+// ========== NEW: Stats Dashboard ==========
+function renderStats() {
+    const setStat = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+    setStat('stat-journal', store.journal.length);
+    setStat('stat-sermons', store.sermons.length);
+    setStat('stat-verses', store.verses.length);
+    setStat('stat-answered', store.prayers.filter(p => p.status === 'answered').length);
+}
+
 // ========== Item Collapse ==========
 function toggleItemCollapse(btn) {
     const item = btn.closest('.item');
     const body = item ? item.querySelector('.item-body') : null;
     if (!body) return;
-
+    
     const isCollapsed = body.classList.toggle('collapsed');
     btn.classList.toggle('expanded', !isCollapsed);
     btn.setAttribute('aria-expanded', String(!isCollapsed));
@@ -496,7 +681,6 @@ function saveProfile() {
     store.profile.notifications.verse = els.notifVerse.checked;
     store.profile.notifications.prayer = els.notifPrayer.checked;
     store.profile.theme = els.themeSelect.value;
-
     saveToStorage();
     applyTheme();
 }
@@ -504,7 +688,7 @@ function saveProfile() {
 function applyTheme() {
     const theme = store.profile.theme || 'light';
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
+    
     if (theme === 'dark' || (theme === 'system' && systemDark)) {
         document.documentElement.setAttribute('data-theme', 'dark');
         document.querySelector('meta[name="theme-color"]').content = '#1a1816';
@@ -532,7 +716,7 @@ function exportData() {
 function importData(input) {
     const file = input.files[0];
     if (!file) return;
-
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
@@ -556,12 +740,12 @@ function importData(input) {
 }
 
 function validateBackup(data) {
-    return data && 
-           Array.isArray(data.sermons) && 
-           Array.isArray(data.verses) && 
-           Array.isArray(data.prayers) && 
-           Array.isArray(data.journal) && 
-           data.profile && typeof data.profile === 'object';
+    return data &&
+        Array.isArray(data.sermons) &&
+        Array.isArray(data.verses) &&
+        Array.isArray(data.prayers) &&
+        Array.isArray(data.journal) &&
+        data.profile && typeof data.profile === 'object';
 }
 
 function confirmClear() {
@@ -576,6 +760,9 @@ function closeModal() {
 
 function clearAllData() {
     localStorage.removeItem(STORAGE_KEY);
+    // Clear drafts too
+    Object.values(DRAFT_KEYS).forEach(key => localStorage.removeItem(key));
+    
     store.sermons = [];
     store.verses = [];
     store.prayers = [];
@@ -587,7 +774,7 @@ function clearAllData() {
         notifications: { sermon: false, verse: false, prayer: false },
         theme: 'light'
     };
-
+    
     loadData();
     renderAll();
     closeModal();
@@ -644,9 +831,7 @@ function drawShareCard(canvas, { kind, title, subtitle, body }) {
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext('2d');
-
-    // Fixed brand palette so shared cards look consistent regardless of the
-    // in-app light/dark setting.
+    
     const palette = {
         bg: '#f5f2ed',
         bg2: '#efe9df',
@@ -657,22 +842,20 @@ function drawShareCard(canvas, { kind, title, subtitle, body }) {
         accentLight: '#a89070',
         border: '#e0d8d0'
     };
-
+    
     const labels = {
         sermon: 'SERMON NOTE',
         verse: 'BIBLE VERSE',
         prayer: 'PRAYER',
         journal: 'JOURNAL'
     };
-
-    // Background
+    
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, palette.bg);
     grad.addColorStop(1, palette.bg2);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
-
-    // Card surface
+    
     const margin = 56;
     const cardX = margin, cardY = margin, cardW = W - margin * 2, cardH = H - margin * 2;
     ctx.fillStyle = palette.surface;
@@ -682,23 +865,20 @@ function drawShareCard(canvas, { kind, title, subtitle, body }) {
     ctx.lineWidth = 2;
     roundRect(ctx, cardX, cardY, cardW, cardH, 32);
     ctx.stroke();
-
+    
     const padX = cardX + 72;
     let cursorY = cardY + 110;
-
-    // Kicker label
+    
     ctx.fillStyle = palette.accent;
     ctx.font = '700 28px -apple-system, "Segoe UI", sans-serif';
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(labels[kind] || 'KIMYA', padX, cursorY);
-
-    // Accent rule
+    
     cursorY += 28;
     ctx.fillStyle = palette.accentLight;
     ctx.fillRect(padX, cursorY, 64, 5);
     cursorY += 70;
-
-    // Title
+    
     ctx.fillStyle = palette.text;
     ctx.font = '700 56px Georgia, "Times New Roman", serif';
     let titleLines = wrapCanvasText(ctx, title || 'Untitled', cardW - 144);
@@ -708,44 +888,39 @@ function drawShareCard(canvas, { kind, title, subtitle, body }) {
     }
     titleLines.forEach((l, i) => ctx.fillText(l, padX, cursorY + i * 64));
     cursorY += titleLines.length * 64 + 8;
-
-    // Subtitle
+    
     if (subtitle) {
         ctx.fillStyle = palette.textSecondary;
         ctx.font = '400 32px -apple-system, "Segoe UI", sans-serif';
         ctx.fillText(subtitle, padX, cursorY);
         cursorY += 50;
     }
-
     cursorY += 30;
-
-    // Decorative quote mark for verses
+    
     if (kind === 'verse') {
         ctx.fillStyle = palette.border;
         ctx.font = '700 170px Georgia, serif';
         ctx.fillText('\u201C', padX - 12, cursorY + 100);
         cursorY += 90;
     }
-
-    // Body text
+    
     ctx.fillStyle = palette.text;
     ctx.font = kind === 'verse'
         ? 'italic 500 44px Georgia, "Times New Roman", serif'
         : '400 38px -apple-system, "Segoe UI", sans-serif';
-
+        
     const bodyMaxWidth = cardW - 144;
     const lineHeight = kind === 'verse' ? 62 : 56;
     const maxBodyBottom = cardY + cardH - 130;
     const maxLines = Math.max(2, Math.floor((maxBodyBottom - cursorY) / lineHeight));
-
+    
     let lines = wrapCanvasText(ctx, body || '', bodyMaxWidth);
     if (lines.length > maxLines) {
         lines = lines.slice(0, maxLines);
         lines[maxLines - 1] = lines[maxLines - 1].replace(/\s+\S*$/, '').replace(/[.,;:]?$/, '') + '\u2026';
     }
     lines.forEach((l, i) => ctx.fillText(l, padX, cursorY + i * lineHeight));
-
-    // Footer / brand
+    
     ctx.fillStyle = palette.accent;
     ctx.font = '700 34px Georgia, "Times New Roman", serif';
     ctx.fillText('Kimya', padX, cardY + cardH - 56);
@@ -768,6 +943,7 @@ function wrapCanvasText(ctx, text, maxWidth) {
     const words = String(text || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
     const lines = [];
     let line = '';
+    
     words.forEach(word => {
         const test = line ? line + ' ' + word : word;
         if (line && ctx.measureText(test).width > maxWidth) {
@@ -777,6 +953,7 @@ function wrapCanvasText(ctx, text, maxWidth) {
             line = test;
         }
     });
+    
     if (line) lines.push(line);
     return lines.length ? lines : [''];
 }
@@ -802,24 +979,18 @@ function renderAll() {
     renderVerses();
     renderPrayers();
     renderJournal();
+    renderStats(); // Update dashboard stats
 }
 
 function emptyState(icon, text) {
-    return `
-        <div class="empty-state">
-            <div class="empty-state-icon">${icon}</div>
-            <p>${text}</p>
-        </div>
-    `;
+    return `<div class="empty-state"> <div class="empty-state-icon">${icon}</div> <p>${text}</p> </div>`;
 }
 
 function showToast(message) {
     els.toast.textContent = message;
     els.toast.classList.add('show');
-
-    // Clear existing timeout if any
+    
     if (els.toast.timeout) clearTimeout(els.toast.timeout);
-
     els.toast.timeout = setTimeout(() => {
         els.toast.classList.remove('show');
     }, 3000);
@@ -842,22 +1013,20 @@ function formatDate(dateStr) {
 function formatDateTime(dateStr) {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', month: 'long', day: 'numeric', 
-        hour: '2-digit', minute: '2-digit' 
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
     });
 }
-
 
 // ========== Rich Text Editor ==========
 function initRichEditor() {
     const editor = document.getElementById('sermon-notes');
     if (!editor) return;
-
+    
     const toolbar = editor.closest('.rich-editor')?.querySelector('.rich-toolbar');
     if (!toolbar) return;
-
-    // Toolbar button clicks
+    
     toolbar.querySelectorAll('.rich-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -872,13 +1041,11 @@ function initRichEditor() {
             updateToolbarState(toolbar, editor);
         });
     });
-
-    // Update toolbar state on selection change
+    
     editor.addEventListener('keyup', () => updateToolbarState(toolbar, editor));
     editor.addEventListener('mouseup', () => updateToolbarState(toolbar, editor));
     editor.addEventListener('click', () => updateToolbarState(toolbar, editor));
-
-    // Keyboard shortcuts
+    
     editor.addEventListener('keydown', (e) => {
         if (e.ctrlKey || e.metaKey) {
             switch(e.key.toLowerCase()) {
@@ -888,15 +1055,13 @@ function initRichEditor() {
             }
         }
     });
-
-    // Clean up pasted content
+    
     editor.addEventListener('paste', (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData('text/plain');
         document.execCommand('insertText', false, text);
     });
-
-    // Ensure paragraphs on input
+    
     editor.addEventListener('input', () => {
         if (editor.innerHTML === '<br>') editor.innerHTML = '';
     });
@@ -935,5 +1100,6 @@ function clearRichContent(elementId) {
     const el = document.getElementById(elementId);
     if (el) el.innerHTML = '';
 }
+
 // Listen for system theme changes
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
