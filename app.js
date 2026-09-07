@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTodayDate();
     bindEvents();
     initRichEditor();
-    initAutosave(); // Load drafts
+    initAutosave(); // Load drafts on start
     renderAll();
     applyTheme();
     initServiceWorker();
@@ -366,7 +366,7 @@ function saveSermon() {
     renderSermons();
     renderStats();
     resetSermonForm();
-    clearDraft('sermon'); // Clear autosave draft
+    clearDraft('sermon');
     showToast('Sermon note saved');
 }
 
@@ -760,7 +760,6 @@ function closeModal() {
 
 function clearAllData() {
     localStorage.removeItem(STORAGE_KEY);
-    // Clear drafts too
     Object.values(DRAFT_KEYS).forEach(key => localStorage.removeItem(key));
     
     store.sermons = [];
@@ -979,7 +978,7 @@ function renderAll() {
     renderVerses();
     renderPrayers();
     renderJournal();
-    renderStats(); // Update dashboard stats
+    renderStats();
 }
 
 function emptyState(icon, text) {
