@@ -13,23 +13,22 @@
 </head>
 <body>
     <div class="app-container">
+        
+        <!-- Header with Search & Autosave Status -->
         <header class="header">
             <h1>Kimya</h1>
             <p>a quiet place for sermons, verses & prayers</p>
-            <header class="header">
-    <h1>Kimya</h1>
-    <p>a quiet place for sermons, verses & prayers</p>
-    
-    <!-- NEW: Global Search -->
-    <div class="search-container">
-        <input type="text" id="global-search" class="search-input" placeholder="Search in this section...">
-    </div>
-    
-    <!-- NEW: Autosave Status Indicator -->
-    <span id="autosave-status" class="autosave-status"></span>
-</header>
+            
+            <!-- NEW: Global Search -->
+            <div class="search-container">
+                <input type="text" id="global-search" class="search-input" placeholder="Search in this section...">
+            </div>
+            
+            <!-- NEW: Autosave Status Indicator -->
+            <span id="autosave-status" class="autosave-status"></span>
         </header>
 
+        <!-- Navigation -->
         <nav class="nav">
             <button class="nav-btn active" data-section="journal">Journal</button>
             <button class="nav-btn" data-section="sermons">Sermons</button>
@@ -39,19 +38,33 @@
         </nav>
 
         <main class="main">
+            
             <!-- Journal Section -->
-            <!-- NEW: Spiritual Dashboard Stats -->
-<div class="card" id="stats-card">
-    <div class="card-title">Your Spiritual Journey</div>
-    <div class="stats-grid">
-        <div class="stat-item"><div class="stat-value" id="stat-journal">0</div><div class="stat-label">Entries</div></div>
-        <div class="stat-item"><div class="stat-value" id="stat-sermons">0</div><div class="stat-label">Sermons</div></div>
-        <div class="stat-item"><div class="stat-value" id="stat-verses">0</div><div class="stat-label">Verses</div></div>
-        <div class="stat-item"><div class="stat-value" id="stat-answered">0</div><div class="stat-label">Answered</div></div>
-    </div>
-</div>
             <section id="journal" class="section active">
                 <h2 class="section-title">Journal</h2>
+
+                <!-- NEW: Spiritual Dashboard Stats -->
+                <div class="card" id="stats-card">
+                    <div class="card-title">Your Spiritual Journey</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-journal">0</div>
+                            <div class="stat-label">Entries</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-sermons">0</div>
+                            <div class="stat-label">Sermons</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-verses">0</div>
+                            <div class="stat-label">Verses</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-answered">0</div>
+                            <div class="stat-label">Answered</div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="card">
                     <div class="card-title">Quick Entry</div>
@@ -287,7 +300,8 @@
             </div>
         </div>
     </div>
-<!-- Share Modal -->
+
+    <!-- Share Modal -->
     <div id="share-modal" class="modal-overlay share-modal-overlay">
         <div class="modal share-modal">
             <h2>Share</h2>
@@ -299,7 +313,8 @@
             </div>
         </div>
     </div>
-    <!-- Toast -->
+
+    <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
     <script src="app.js"></script>
